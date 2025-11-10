@@ -45,7 +45,7 @@ async fn main() {
     let state: models::app_state::AppState = init_state(&settings).await;
     let addr: String = format!("{}:{}", settings.app_host, settings.app_port);
 
-    tracing::info!("Starting hotel booking API on {}", addr);
+    tracing::info!("Starting hotel booking API on {}/docs", addr);
 
     let app: axum::Router = routes::create_routers(state).layer(
         cors::CorsLayer::new()
