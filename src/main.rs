@@ -1,0 +1,66 @@
+mod enums;
+mod models;
+mod resources;
+mod routes;
+mod settings;
+
+use axum;
+use dotenvy;
+use redis;
+use sqlx;
+use tokio;
+use tower_http::cors;
+use tracing_subscriber;
+
+async fn init_state(settings: &settings::Settings) -> models::app_state::AppState {
+    tracing::info!("Initializing state");
+
+    let pool: sqlx::Pool<sqlx::Postgres> = match resources::init_postgres(settings).await {
+        Ok(pool) => pool,
+        Err(e) => {
+            tracing::error!("Failed to initialize database: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let redis_conn: redis::aio::MultiplexedConnection = match resources::init_redis(settings).await
+    {
+        Ok(conn) => conn,
+        Err(e) => {
+            tracing::error!("Failed to initialize Redis: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let state: models::app_state::AppState = models::app_state::AppState { pool, redis_conn };
+
+    tracing::info!("Initialized state");
+
+    state
+}
+
+#[tokio::main]
+async fn main() {
+    dotenvy::dotenv().ok();
+
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
+
+    let settings: settings::Settings = settings::Settings::new();
+    let state: models::app_state::AppState = init_state(&settings).await;
+    let addr: String = format!("{}:{}", settings.app_host, settings.app_port);
+
+    tracing::info!("Starting hotel booking API on {}", addr);
+
+    let app: axum::Router = routes::create_routers(state).layer(
+        cors::CorsLayer::new()
+            .allow_origin(cors::Any)
+            .allow_methods(cors::Any)
+            .allow_headers(cors::Any),
+    );
+
+    let listener: tokio::net::TcpListener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+
+    axum::serve(listener, app).await.unwrap();
+}
