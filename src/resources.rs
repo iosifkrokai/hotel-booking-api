@@ -1,5 +1,3 @@
-use redis;
-use sqlx;
 use std::{env, path};
 
 use crate::settings;

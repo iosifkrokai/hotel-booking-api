@@ -4,13 +4,7 @@ mod resources;
 mod routes;
 mod settings;
 
-use axum;
-use dotenvy;
-use redis;
-use sqlx;
-use tokio;
 use tower_http::cors;
-use tracing_subscriber;
 
 async fn init_state(settings: &settings::Settings) -> models::app_state::AppState {
     tracing::info!("Initializing state");
