@@ -6,7 +6,7 @@ mod settings;
 
 use tower_http::cors;
 
-async fn init_state(settings: &settings::Settings) -> models::app_state::AppState {
+async fn init_state(settings: &settings::Settings) -> models::AppState {
     tracing::info!("Initializing state");
 
     let pool: sqlx::Pool<sqlx::Postgres> = match resources::init_postgres(settings).await {
@@ -26,11 +26,9 @@ async fn init_state(settings: &settings::Settings) -> models::app_state::AppStat
         }
     };
 
-    let state: models::app_state::AppState = models::app_state::AppState { pool, redis_conn };
-
     tracing::info!("Initialized state");
 
-    state
+    models::AppState { pool, redis_conn }
 }
 
 #[tokio::main]
@@ -42,7 +40,7 @@ async fn main() {
         .init();
 
     let settings: settings::Settings = settings::Settings::new();
-    let state: models::app_state::AppState = init_state(&settings).await;
+    let state: models::AppState = init_state(&settings).await;
     let addr: String = format!("{}:{}", settings.app_host, settings.app_port);
 
     tracing::info!("Starting hotel booking API on {}/docs", addr);

@@ -32,7 +32,7 @@ pub async fn live() -> impl response::IntoResponse {
     ),
     tag = "health"
 )]
-pub async fn ready(state: State<models::app_state::AppState>) -> impl response::IntoResponse {
+pub async fn ready(state: State<models::AppState>) -> impl response::IntoResponse {
     tracing::info!("GET /health/ready endpoint called");
 
     let postgres_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {

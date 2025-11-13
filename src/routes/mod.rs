@@ -14,7 +14,7 @@ use utoipa_swagger_ui::SwaggerUi;
 )]
 pub struct ApiDoc;
 
-pub fn create_routers(state: models::app_state::AppState) -> Router {
+pub fn create_routers(state: models::AppState) -> Router {
     let openapi = ApiDoc::openapi();
 
     Router::new()
